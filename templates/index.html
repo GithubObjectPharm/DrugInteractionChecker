@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Drug Interaction Checker</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background-color: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar {
+      background-color: #2f80ed;
+      color: white;
+      padding: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .main {
+      display: flex;
+      flex-grow: 1;
+    }
+
+    .left-panel {
+      width: 30%;
+      background-color: #ffffff;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .right-panel {
+      width: 70%;
+      padding: 20px;
+      background-color: #fafafa;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 20px;
+      color: #007bff;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      border-radius: 0;
+      box-sizing: border-box;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 97px;
+      left: 20px;
+      width: calc(100% - 40px);
+      background-color: white;
+      border: 1px solid #ccc;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+
+    .autocomplete-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    ul#drugList {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+
+    ul#drugList li {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drug-name {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .remove-btn {
+      color: red;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .single-analysis {
+      color: #007bff;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #2f80ed;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    #chatbox {
+      flex-grow: 1;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 18px;
+    }
+
+    .bot-message {
+      color: #333;
+      margin: 20px 0;
+    }
+    
+  </style>
+</head>
+
+<body>
+
+  <div class="navbar">Home &nbsp;&nbsp; Interactions</div>
+
+  <div class="main">
+    <div class="left-panel">
+      <h1>Selected Items</h1>
+      <label for="drugInput">Drug(s)</label><br>
+      <div style="position: relative;">
+        <input type="text" id="drugInput" placeholder="Enter Drug Name" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteList"></div>
+      </div>
+
+      <ul id="drugList"></ul>
+      <button id="checkBtn" onclick="checkInteractions()" disabled>Check Interaction</button>
+      <button id="eventBtn" onclick="checkAdverseEvents()" disabled>Check Adverse Event</button>
+    </div>
+    
+
+    <div class="right-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="margin: 0; font-size: 28px;">Drug Interaction Result</h1>
+        <div style="text-align: right; margin-bottom: 10px;">
+          <button onclick="showHistory()" style="
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: auto;
+            min-width: 0;
+            margin-right: 10px;
+          ">History</button>
+
+          <button onclick="clearChatbox()" style="
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: auto;
+            min-width: 0;
+          ">Clear</button>
+        </div>
+      </div>
+
+      <div id="chatbox"></div>
+    </div>
+  </div>
+
+<!-- Updated History Modal -->
+<div id="historyModal" style="
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border: 1px solid #ccc;
+  width: 50%;
+  height: 80%;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  border-radius: 8px;
+">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h3 style="margin: 0;">Cleared Output History</h3>
+    <span onclick="document.getElementById('historyModal').style.display='none'" style="
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 24px;
+      padding: 0 10px;
+    ">&times;</span>
+  </div>
+  <div id="historyContent"></div>
+</div>
+
+  ">
+    <span onclick="document.getElementById('historyModal').style.display='none'" style="
+      float: right;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 18px;
+    ">&times;</span>
+    <h3>Cleared Output History</h3>
+    <div id="historyContent"></div>
+  </div>
+
+  <script>
+    const drugDatabase = [
+      "Acetaminophen", "Ibuprofen", "Amoxicillin", "Clarithromycin",
+      "Sildenafil", "Metformin", "Warfarin", "Tylenol", "Viagra", "Lipitor"
+    ];
+
+    let drugs = [];
+    let isTyping = false;
+    const chatHistory = [];
+
+    function addDrug(selectedDrug = null) {
+      const inputVal = selectedDrug || $("#drugInput").val().trim();
+      const drug = inputVal.charAt(0).toUpperCase() + inputVal.slice(1).toLowerCase();
+      if (drug && !drugs.includes(drug)) {
+        drugs.push(drug);
+        updateDrugList();
+      }
+      $("#drugInput").val("");
+      $("#autocompleteList").hide();
+    }
+
+    function removeDrug(index) {
+      drugs.splice(index, 1);
+      updateDrugList();
+    }
+
+    function updateDrugList() {
+      const list = $("#drugList");
+      list.empty();
+      drugs.forEach((drug, index) => {
+        list.append(`
+          <li>
+            <span>
+              <span class="remove-btn" onclick="removeDrug(${index})">✖</span>
+              <span class="drug-name">${drug}</span>
+            </span>
+            <a href="#" class="single-analysis">Single Drug Analysis</a>
+          </li>
+        `);
+      });
+      const hasDrugs = drugs.length > 0;
+      $("#checkBtn").prop("disabled", drugs.length < 2 || isTyping);
+      $("#eventBtn").prop("disabled", !hasDrugs || isTyping);
+    }
+
+    function checkInteractions() {
+      if (isTyping || drugs.length < 2) return;
+      disableInput();
+
+      $.ajax({
+        type: "POST",
+        url: "/get",
+        contentType: "application/json",
+        data: JSON.stringify({ msg: "Interaction between " + drugs.join(" and "), type: "interaction" }),
+        success: function (response) {
+          typeWriterEffect(response.response || "⚠️ No data received.");
+        },
+        error: function () {
+          typeWriterEffect("⚠️ Could not fetch interaction data.");
+        }
+      });
+    }
+
+    function checkAdverseEvents() {
+      if (isTyping || drugs.length < 1) return;
+      disableInput();
+
+      $.ajax({
+        type: "POST",
+        url: "/get",
+        contentType: "application/json",
+        data: JSON.stringify({ msg: "Adverse events for " + drugs.join(" and "), type: "event" }),
+        success: function (response) {
+          typeWriterEffect(response.response || "⚠️ No data received.");
+        },
+        error: function () {
+          typeWriterEffect("⚠️ Could not fetch adverse event data.");
+        }
+      });
+    }
+
+    function typeWriterEffect(html) {
+  const chatbox = $("#chatbox");
+  const botMessage = $("<div class='bot-message'></div>");
+  const replyElement = $("<span class='bot-reply'></span>");
+  botMessage.append(replyElement);
+  chatbox.append(botMessage);
+
+  let i = 0;
+  isTyping = true;
+  updateDrugList();
+
+  function typeNextChar() {
+    if (i >= html.length) {
+      isTyping = false;
+      enableInput();
+      return;
+    }
+
+    // Add next character and re-render using innerHTML
+    const currentHTML = html.slice(0, i + 1);
+    replyElement.html(currentHTML);
+    chatbox.scrollTop(chatbox[0].scrollHeight);
+    i++;
+    setTimeout(typeNextChar, 1); // Adjust speed as needed
+  }
+
+  typeNextChar();
+}
+
+
+    function disableInput() {
+      $("#drugInput").prop("disabled", true);
+      $("#checkBtn").prop("disabled", true);
+      $("#eventBtn").prop("disabled", true);
+    }
+
+    function enableInput() {
+      $("#drugInput").prop("disabled", false);
+      updateDrugList();
+    }
+
+    function clearChatbox() {
+      const current = $("#chatbox").html().trim();
+      if (current) {
+        chatHistory.push(current);
+      }
+      $("#chatbox").html("");
+    }
+
+    function showHistory() {
+      if (chatHistory.length === 0) {
+        $("#historyContent").html("<p>No history available.</p>");
+      } else {
+        $("#historyContent").html(
+          chatHistory.map((entry, i) => `<div><strong>Entry ${i + 1}</strong><br>${entry}</div><hr>`).join("")
+        );
+      }
+      $("#historyModal").show();
+    }
+
+    $("#drugInput").on("input", function () {
+      const value = $(this).val().toLowerCase();
+      const matches = drugDatabase.filter(drug => drug.toLowerCase().includes(value));
+      const autocomplete = $("#autocompleteList");
+      autocomplete.empty();
+
+      if (value && matches.length) {
+        matches.forEach(drug => {
+          autocomplete.append(`<div class='autocomplete-item' onclick="addDrug('${drug}')">${drug}</div>`);
+        });
+        autocomplete.show();
+      } else {
+        autocomplete.hide();
+      }
+    });
+
+    $("#drugInput").on("keypress", function (e) {
+      if (e.which == 13) {
+        addDrug();
+      }
+    });
+
+    $(document).click(function (e) {
+      if (!$(e.target).closest('#drugInput').length && !$(e.target).hasClass('autocomplete-item')) {
+        $("#autocompleteList").hide();
+      }
+    });
+  </script>
+  
+
+</body>
+</html>
