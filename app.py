@@ -6,7 +6,7 @@ import json
 app = Flask(__name__)
 
 # ✅ Your OpenAI API key
-client = OpenAI(api_key="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")
+client = OpenAI(api_key="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")
 
 FDA_API_ENDPOINT = "https://api.fda.gov/drug/event.json"
 
