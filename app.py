@@ -1,21 +1,17 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, make_response
+from flask_cors import CORS
 import requests
 from openai import OpenAI
 import json
-from flask import Flask
-from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 
-# TEMP: Allow all origins (wildcard)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
-@app.route("/")
-def home():
-    return "API is live"
-    @app.route("/version")
+@app.route("/version")
 def version():
     return "Deployed version with CORS is active"
+
 
 
 # ✅ Your OpenAI API key
