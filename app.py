@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 
 # Allow only your real site
-CORS(app, origins=["https://astrx.ai"])
+CORS(app)
 
 
 app = Flask(__name__)
