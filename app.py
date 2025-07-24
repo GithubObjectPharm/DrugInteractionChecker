@@ -5,7 +5,7 @@ import json
 from flask import Flask
 from flask_cors import CORS
 
-app = Flask(__name__)
+
 
 # Allow only your real site
 CORS(app, origins=["https://astrx.ai"])
