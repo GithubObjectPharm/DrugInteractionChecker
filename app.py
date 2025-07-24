@@ -5,13 +5,15 @@ import json
 from flask import Flask
 from flask_cors import CORS
 
-
-
-# Allow only your real site
-CORS(app)
-
-
 app = Flask(__name__)
+
+# TEMP: Allow all origins (wildcard)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+@app.route("/")
+def home():
+    return "API is live"
+
 
 # ✅ Your OpenAI API key
 client = OpenAI(api_key="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")
