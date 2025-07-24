@@ -13,6 +13,9 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 @app.route("/")
 def home():
     return "API is live"
+    @app.route("/version")
+def version():
+    return "Deployed version with CORS is active"
 
 
 # ✅ Your OpenAI API key
