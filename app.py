@@ -2,6 +2,14 @@ from flask import Flask, request, jsonify, render_template
 import requests
 from openai import OpenAI
 import json
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+
+# Allow only your real site
+CORS(app, origins=["https://astrx.ai"])
+
 
 app = Flask(__name__)
 
